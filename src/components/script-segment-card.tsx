@@ -164,139 +164,141 @@ export function ScriptSegmentCard({
 
   return (
     <Card className="overflow-hidden shadow-sm transition-shadow hover:shadow-md">
-      <CardContent className="grid gap-6 p-6">
-        <div className="relative aspect-video w-full">
-          {isGeneratingVideo ? (
-            <div className="flex h-full w-full flex-col items-center justify-center rounded-lg border bg-muted/50">
-              <RefreshCw className="mb-2 h-8 w-8 animate-spin text-muted-foreground" />
-              <p className="font-medium text-muted-foreground">
-                Generating video clip...
-              </p>
-            </div>
-          ) : isVideoReady ? (
-            <video
-              key={generatedVideoUrl}
-              src={generatedVideoUrl}
-              controls
-              autoPlay
-              loop
-              className="h-full w-full rounded-lg border object-contain"
-            />
-          ) : isCurrentlyGeneratingImage ? (
-            <div className="flex h-full w-full flex-col items-center justify-center rounded-lg border bg-muted/50">
-              <RefreshCw className="mb-2 h-8 w-8 animate-spin text-muted-foreground" />
-              <p className="font-medium text-muted-foreground">
-                Generating image...
-              </p>
-            </div>
-          ) : isImageReady ? (
-            <>
-              <Image
-                src={generatedImageUrl}
-                alt={segment.imagePrompt}
-                fill
-                className="rounded-lg border object-cover"
-                data-ai-hint={imageHint}
+      <CardContent className="p-6">
+        <div className="grid gap-6">
+          <div className="relative aspect-video w-full">
+            {isGeneratingVideo ? (
+              <div className="flex h-full w-full flex-col items-center justify-center rounded-lg border bg-muted/50">
+                <RefreshCw className="mb-2 h-8 w-8 animate-spin text-muted-foreground" />
+                <p className="font-medium text-muted-foreground">
+                  Generating video clip...
+                </p>
+              </div>
+            ) : isVideoReady ? (
+              <video
+                key={generatedVideoUrl}
+                src={generatedVideoUrl}
+                controls
+                autoPlay
+                loop
+                className="h-full w-full rounded-lg border object-contain"
               />
-              <div className="absolute bottom-2 right-2 flex gap-2">
+            ) : isCurrentlyGeneratingImage ? (
+              <div className="flex h-full w-full flex-col items-center justify-center rounded-lg border bg-muted/50">
+                <RefreshCw className="mb-2 h-8 w-8 animate-spin text-muted-foreground" />
+                <p className="font-medium text-muted-foreground">
+                  Generating image...
+                </p>
+              </div>
+            ) : isImageReady ? (
+              <>
+                <Image
+                  src={generatedImageUrl}
+                  alt={segment.imagePrompt}
+                  fill
+                  className="rounded-lg border object-cover"
+                  data-ai-hint={imageHint}
+                />
+                <div className="absolute bottom-2 right-2 flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={handleDownloadImage}
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    Download
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={handleGenerateImage}
+                    disabled={isCurrentlyGeneratingImage}
+                  >
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Regenerate
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="default"
+                    onClick={handleGenerateVideoClip}
+                    disabled={isGeneratingVideo}
+                  >
+                    <Video className="mr-2 h-4 w-4" />
+                    Generate Clip
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <div className="flex h-full w-full flex-col items-center justify-center rounded-lg border border-dashed bg-muted/50">
                 <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={handleDownloadImage}
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  Download
-                </Button>
-                <Button
-                  size="sm"
+                  size="lg"
                   onClick={handleGenerateImage}
                   disabled={isCurrentlyGeneratingImage}
                 >
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Regenerate
-                </Button>
-                <Button
-                  size="sm"
-                  variant="default"
-                  onClick={handleGenerateVideoClip}
-                  disabled={isGeneratingVideo}
-                >
-                  <Video className="mr-2 h-4 w-4" />
-                  Generate Clip
+                  <Camera className="mr-2" />
+                  Generate Image
                 </Button>
               </div>
-            </>
-          ) : (
-            <div className="flex h-full w-full flex-col items-center justify-center rounded-lg border border-dashed bg-muted/50">
-              <Button
-                size="lg"
-                onClick={handleGenerateImage}
-                disabled={isCurrentlyGeneratingImage}
-              >
-                <Camera className="mr-2" />
-                Generate Image
-              </Button>
-            </div>
-          )}
-        </div>
-        <div className="grid gap-6 md:grid-cols-2">
-          <div>
-            <Label
-              htmlFor={`script-${index}`}
-              className="text-sm font-semibold text-muted-foreground"
-            >
-              Scene {index + 1} - Narration
-            </Label>
-            <Textarea
-              id={`script-${index}`}
-              value={segment.scriptSegment}
-              onChange={e => onScriptChange(index, e.target.value)}
-              rows={5}
-              className="mt-1 resize-none"
-            />
+            )}
           </div>
-
-          <div className="grid gap-2">
-            <div className="flex items-center justify-between">
+          <div className="grid gap-6 md:grid-cols-2">
+            <div>
               <Label
-                htmlFor={`prompt-${index}`}
+                htmlFor={`script-${index}`}
                 className="text-sm font-semibold text-muted-foreground"
               >
-                Image Prompt
+                Scene {index + 1} - Narration
               </Label>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleRewritePrompt}
-                disabled={isRewritingPrompt}
-              >
-                {isRewritingPrompt ? (
-                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                )}
-                Rewrite
-              </Button>
-            </div>
-            <div className="relative">
               <Textarea
-                id={`prompt-${index}`}
-                value={segment.imagePrompt}
-                onChange={e => onPromptChange(index, e.target.value)}
+                id={`script-${index}`}
+                value={segment.scriptSegment}
+                onChange={e => onScriptChange(index, e.target.value)}
                 rows={5}
-                className="pr-12 resize-none mt-1"
-                disabled={isRewritingPrompt}
+                className="mt-1 resize-none"
               />
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute right-2 top-2 h-8 w-8 text-muted-foreground hover:text-foreground"
-                onClick={handleCopy}
-                aria-label="Copy prompt"
-              >
-                <Copy className="h-4 w-4" />
-                <span className="sr-only">Copy prompt</span>
-              </Button>
+            </div>
+
+            <div className="grid gap-2">
+              <div className="flex items-center justify-between">
+                <Label
+                  htmlFor={`prompt-${index}`}
+                  className="text-sm font-semibold text-muted-foreground"
+                >
+                  Image Prompt
+                </Label>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleRewritePrompt}
+                  disabled={isRewritingPrompt}
+                >
+                  {isRewritingPrompt ? (
+                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                  )}
+                  Rewrite
+                </Button>
+              </div>
+              <div className="relative">
+                <Textarea
+                  id={`prompt-${index}`}
+                  value={segment.imagePrompt}
+                  onChange={e => onPromptChange(index, e.target.value)}
+                  rows={5}
+                  className="pr-12 resize-none mt-1"
+                  disabled={isRewritingPrompt}
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-2 top-2 h-8 w-8 text-muted-foreground hover:text-foreground"
+                  onClick={handleCopy}
+                  aria-label="Copy prompt"
+                >
+                  <Copy className="h-4 w-4" />
+                  <span className="sr-only">Copy prompt</span>
+                </Button>
+              </div>
             </div>
           </div>
         </div>

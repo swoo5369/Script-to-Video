@@ -2,6 +2,8 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   serverActions: {
+    // Disable body size limit to allow for large data uploads (e.g., videos).
+    // This is necessary because image/video data can exceed the default 1MB limit.
     bodySizeLimit: false,
   },
   typescript: {
