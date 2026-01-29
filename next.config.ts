@@ -1,7 +1,8 @@
-const nextConfig = {
-  /* config options here */
+import type { NextConfig } from 'next';
+
+const nextConfig: NextConfig = {
   serverActions: {
-    bodySizeLimit: '50mb',
+    bodySizeLimit: 50 * 1024 * 1024, // 50MB
   },
   typescript: {
     ignoreBuildErrors: true,
