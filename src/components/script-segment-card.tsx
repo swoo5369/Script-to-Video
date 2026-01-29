@@ -5,9 +5,13 @@ import {Card, CardContent} from '@/components/ui/card';
 import {Textarea} from '@/components/ui/textarea';
 import {Label} from '@/components/ui/label';
 import {useToast} from '@/hooks/use-toast';
-import {Copy, Camera, RefreshCw, Download} from 'lucide-react';
+import {Copy, Camera, RefreshCw, Download, Video} from 'lucide-react';
 import type {Segment} from '@/lib/types';
-import {generateImageAction, rewriteImagePromptAction} from '@/app/actions';
+import {
+  generateImageAction,
+  rewriteImagePromptAction,
+  generateSingleVideoClipAction,
+} from '@/app/actions';
 import {useState} from 'react';
 
 interface ScriptSegmentCardProps {
@@ -34,6 +38,10 @@ export function ScriptSegmentCard({
   const {toast} = useToast();
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [isRewritingPrompt, setIsRewritingPrompt] = useState(false);
+  const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
+  const [generatedVideoUrl, setGeneratedVideoUrl] = useState<string | null>(
+    null
+  );
 
   const handleCopy = () => {
     navigator.clipboard.writeText(segment.imagePrompt);
@@ -116,22 +124,72 @@ export function ScriptSegmentCard({
     });
   };
 
+  const handleGenerateVideoClip = async () => {
+    if (!generatedImageUrl) {
+      toast({
+        variant: 'destructive',
+        title: 'Image not available',
+        description: 'Please generate the image first.',
+      });
+      return;
+    }
+    setIsGeneratingVideo(true);
+    try {
+      const videoUrl = await generateSingleVideoClipAction(
+        segment,
+        generatedImageUrl
+      );
+      setGeneratedVideoUrl(videoUrl);
+      toast({
+        title: 'Video Clip Generated!',
+        description: 'Your video clip for this scene is ready.',
+      });
+    } catch (error) {
+      console.error(error);
+      toast({
+        variant: 'destructive',
+        title: 'Error Generating Video Clip',
+        description: 'Failed to generate the video clip. Please try again.',
+      });
+    } finally {
+      setIsGeneratingVideo(false);
+    }
+  };
+
   const imageHint = segment.imagePrompt.split(' ').slice(0, 2).join(' ');
-  const isCurrentlyGenerating =
+  const isCurrentlyGeneratingImage =
     isGeneratingImage || (isGeneratingAll && !generatedImageUrl);
+  const isImageReady = !!generatedImageUrl;
+  const isVideoReady = !!generatedVideoUrl;
 
   return (
     <Card className="overflow-hidden shadow-sm transition-shadow hover:shadow-md">
       <CardContent className="grid gap-6 p-6">
         <div className="relative aspect-video w-full">
-          {isCurrentlyGenerating ? (
+          {isGeneratingVideo ? (
+            <div className="flex h-full w-full flex-col items-center justify-center rounded-lg border bg-muted/50">
+              <RefreshCw className="mb-2 h-8 w-8 animate-spin text-muted-foreground" />
+              <p className="font-medium text-muted-foreground">
+                Generating video clip...
+              </p>
+            </div>
+          ) : isVideoReady ? (
+            <video
+              key={generatedVideoUrl}
+              src={generatedVideoUrl}
+              controls
+              autoPlay
+              loop
+              className="h-full w-full rounded-lg border object-contain"
+            />
+          ) : isCurrentlyGeneratingImage ? (
             <div className="flex h-full w-full flex-col items-center justify-center rounded-lg border bg-muted/50">
               <RefreshCw className="mb-2 h-8 w-8 animate-spin text-muted-foreground" />
               <p className="font-medium text-muted-foreground">
                 Generating image...
               </p>
             </div>
-          ) : generatedImageUrl ? (
+          ) : isImageReady ? (
             <>
               <Image
                 src={generatedImageUrl}
@@ -152,10 +210,19 @@ export function ScriptSegmentCard({
                 <Button
                   size="sm"
                   onClick={handleGenerateImage}
-                  disabled={isCurrentlyGenerating}
+                  disabled={isCurrentlyGeneratingImage}
                 >
                   <RefreshCw className="mr-2 h-4 w-4" />
                   Regenerate
+                </Button>
+                <Button
+                  size="sm"
+                  variant="default"
+                  onClick={handleGenerateVideoClip}
+                  disabled={isGeneratingVideo}
+                >
+                  <Video className="mr-2 h-4 w-4" />
+                  Generate Clip
                 </Button>
               </div>
             </>
@@ -164,7 +231,7 @@ export function ScriptSegmentCard({
               <Button
                 size="lg"
                 onClick={handleGenerateImage}
-                disabled={isCurrentlyGenerating}
+                disabled={isCurrentlyGeneratingImage}
               >
                 <Camera className="mr-2" />
                 Generate Image

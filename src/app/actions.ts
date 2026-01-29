@@ -57,3 +57,27 @@ export async function generateVideoAction(
   const result = await generateVideoClips(videoClipsInput);
   return result;
 }
+
+export async function generateSingleVideoClipAction(
+  segment: Segment,
+  imageUrl: string
+): Promise<string> {
+  if (!segment || !imageUrl) {
+    throw new Error('Segment and image URL are required.');
+  }
+
+  const videoClipsInput = [
+    {
+      scriptSegment: segment.scriptSegment,
+      imageUrl: imageUrl,
+    },
+  ];
+
+  const result = await generateVideoClips(videoClipsInput);
+
+  if (!result || result.length === 0 || !result[0].videoUrl) {
+    throw new Error('Video clip generation failed.');
+  }
+
+  return result[0].videoUrl;
+}
