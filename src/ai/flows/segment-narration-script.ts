@@ -15,6 +15,10 @@ const SegmentNarrationScriptInputSchema = z.object({
   narrationScript: z
     .string()
     .describe('The complete narration script to be segmented.'),
+  stylePrompt: z
+    .string()
+    .optional()
+    .describe('A common style prompt to be appended to each image prompt.'),
 });
 export type SegmentNarrationScriptInput = z.infer<
   typeof SegmentNarrationScriptInputSchema
@@ -46,6 +50,10 @@ const segmentNarrationScriptPrompt = ai.definePrompt({
 
   For each segment, create an image prompt that accurately reflects the content of the segment.
   The image prompt should be detailed and suitable for use with AI image generation tools, including clear descriptions of subjects, actions, environments, and styles.
+
+  {{#if stylePrompt}}
+  CRITICAL: You MUST append the following style prompt to the end of EACH generated image prompt: ", {{{stylePrompt}}}"
+  {{/if}}
 
   Output the result as a JSON array of objects with the following keys:
   - scriptSegment: The segment of the narration script.

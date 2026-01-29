@@ -22,9 +22,11 @@ import {Skeleton} from '@/components/ui/skeleton';
 import {Logo} from '@/components/logo';
 import {Wand2, Clapperboard, RefreshCw, Camera} from 'lucide-react';
 import {VideoPlayer} from '@/components/video-player';
+import {Label} from '@/components/ui/label';
 
 export default function ShortsAIScriptPage() {
   const [script, setScript] = useState('');
+  const [stylePrompt, setStylePrompt] = useState('');
   const [segments, setSegments] = useState<Segment[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [generatedImages, setGeneratedImages] = useState<Record<number, string>>(
@@ -45,7 +47,7 @@ export default function ShortsAIScriptPage() {
     setVideoClips([]);
 
     try {
-      const result = await generateSegments(script);
+      const result = await generateSegments(script, stylePrompt);
       setSegments(result);
     } catch (error) {
       console.error(error);
@@ -195,6 +197,24 @@ export default function ShortsAIScriptPage() {
                   className="resize-none text-base"
                   disabled={isLoading}
                 />
+                <div className="grid gap-2">
+                  <Label htmlFor="style-prompt" className="font-semibold">
+                    Common Style Prompt (Optional)
+                  </Label>
+                  <Textarea
+                    id="style-prompt"
+                    placeholder="e.g., cinematic, 4k, hyperrealistic, anime style"
+                    value={stylePrompt}
+                    onChange={e => setStylePrompt(e.target.value)}
+                    rows={2}
+                    className="mt-1 resize-none"
+                    disabled={isLoading}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    This prompt will be added to every generated image prompt to
+                    maintain a consistent style.
+                  </p>
+                </div>
                 <div className="flex justify-end gap-2">
                   <Button
                     type="submit"

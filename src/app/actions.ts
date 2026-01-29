@@ -9,23 +9,20 @@ import type {GenerateVideoClipsOutput} from '@/ai/flows/generate-video-clips';
 import type {Segment} from '@/lib/types';
 
 export async function generateSegments(
-  narrationScript: string
+  narrationScript: string,
+  stylePrompt: string
 ): Promise<SegmentNarrationScriptOutput> {
   if (!narrationScript) {
     throw new Error('Script cannot be empty.');
   }
 
-  const segments = await segmentNarrationScript({narrationScript});
+  const segments = await segmentNarrationScript({narrationScript, stylePrompt});
   return segments;
 }
 
 export async function generateImageAction(
   prompt: string
 ): Promise<GenerateImageOutput> {
-  if (!prompt) {
-    throw new Error('Prompt cannot be empty.');
-  }
-
   const result = await generateImage({prompt});
   return result;
 }
