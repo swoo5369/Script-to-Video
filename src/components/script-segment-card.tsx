@@ -21,10 +21,14 @@ interface ScriptSegmentCardProps {
   onPromptChange: (index: number, newPrompt: string) => void;
   onScriptChange: (index: number, newScript: string) => void;
   generatedImage?: GenerateImageActionResult;
-  onImageGenerated: (index: number, imageResult: GenerateImageActionResult) => void;
+  onImageGenerated: (
+    index: number,
+    imageResult: GenerateImageActionResult
+  ) => void;
   isGeneratingAll: boolean;
   stylePrompt: string;
   aspectRatio: string;
+  geminiApiKey: string;
 }
 
 export function ScriptSegmentCard({
@@ -37,6 +41,7 @@ export function ScriptSegmentCard({
   isGeneratingAll,
   stylePrompt,
   aspectRatio,
+  geminiApiKey,
 }: ScriptSegmentCardProps) {
   const {toast} = useToast();
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
@@ -63,10 +68,18 @@ export function ScriptSegmentCard({
       });
       return;
     }
+    if (!geminiApiKey) {
+      toast({
+        variant: 'destructive',
+        title: 'API Key Missing',
+        description: 'Please enter your Gemini API key at the top of the page.',
+      });
+      return;
+    }
     setIsGeneratingImage(true);
     setGeneratedVideoUrl(null); // Reset video when generating a new image
     try {
-      const result = await generateImageAction(segment.imagePrompt);
+      const result = await generateImageAction(geminiApiKey, segment.imagePrompt);
       onImageGenerated(index, result);
     } catch (error) {
       console.error(error);
@@ -81,9 +94,18 @@ export function ScriptSegmentCard({
   };
 
   const handleRewritePrompt = async () => {
+    if (!geminiApiKey) {
+      toast({
+        variant: 'destructive',
+        title: 'API Key Missing',
+        description: 'Please enter your Gemini API key at the top of the page.',
+      });
+      return;
+    }
     setIsRewritingPrompt(true);
     try {
       const newPrompt = await rewriteImagePromptAction(
+        geminiApiKey,
         segment.scriptSegment,
         stylePrompt
       );
@@ -143,9 +165,18 @@ export function ScriptSegmentCard({
       });
       return;
     }
+    if (!geminiApiKey) {
+      toast({
+        variant: 'destructive',
+        title: 'API Key Missing',
+        description: 'Please enter your Gemini API key at the top of the page.',
+      });
+      return;
+    }
     setIsGeneratingVideo(true);
     try {
       const videoUrl = await generateSingleVideoClipAction(
+        geminiApiKey,
         segment,
         generatedImage.imageId,
         aspectRatio
