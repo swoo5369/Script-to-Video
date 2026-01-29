@@ -38,9 +38,10 @@ const generateImageFlow = ai.defineFlow(
       throw new Error('Prompt cannot be empty.');
     }
     const {media} = await ai.generate({
-      model: 'googleai/imagen-4.0-fast-generate-001',
+      model: 'googleai/gemini-2.5-flash-image-preview',
       prompt: input.prompt,
       config: {
+        responseModalities: ['TEXT', 'IMAGE'],
         safetySettings: [
           {
             category: 'HARM_CATEGORY_HATE_SPEECH',
