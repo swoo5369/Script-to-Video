@@ -11,12 +11,17 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import {useToast} from '@/hooks/use-toast';
-import {generateSegments, generateImageAction} from './actions';
+import {
+  generateSegments,
+  generateImageAction,
+  generateVideoAction,
+} from './actions';
 import type {Segment} from '@/lib/types';
 import {ScriptSegmentCard} from '@/components/script-segment-card';
 import {Skeleton} from '@/components/ui/skeleton';
 import {Logo} from '@/components/logo';
 import {Wand2, Clapperboard, RefreshCw, Camera} from 'lucide-react';
+import {VideoPlayer} from '@/components/video-player';
 
 export default function ShortsAIScriptPage() {
   const [script, setScript] = useState('');
@@ -26,6 +31,8 @@ export default function ShortsAIScriptPage() {
     {}
   );
   const [isGeneratingAll, setIsGeneratingAll] = useState(false);
+  const [videoClips, setVideoClips] = useState<string[]>([]);
+  const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
   const {toast} = useToast();
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -35,6 +42,7 @@ export default function ShortsAIScriptPage() {
     setIsLoading(true);
     setSegments([]);
     setGeneratedImages({});
+    setVideoClips([]);
 
     try {
       const result = await generateSegments(script);
@@ -125,6 +133,34 @@ export default function ShortsAIScriptPage() {
       });
     } finally {
       setIsGeneratingAll(false);
+    }
+  };
+
+  const allImagesGenerated =
+    segments.length > 0 && Object.keys(generatedImages).length === segments.length;
+
+  const handleGenerateVideo = async () => {
+    if (!allImagesGenerated || isGeneratingVideo) return;
+
+    setIsGeneratingVideo(true);
+    setVideoClips([]);
+
+    try {
+      const result = await generateVideoAction(segments, generatedImages);
+      setVideoClips(result.map(clip => clip.videoUrl));
+      toast({
+        title: 'Video Generated!',
+        description: 'Your video clips have been created successfully.',
+      });
+    } catch (error) {
+      console.error(error);
+      toast({
+        variant: 'destructive',
+        title: 'Error Generating Video',
+        description: 'Failed to generate video clips. Please try again.',
+      });
+    } finally {
+      setIsGeneratingVideo(false);
     }
   };
 
@@ -234,9 +270,24 @@ export default function ShortsAIScriptPage() {
                       </>
                     )}
                   </Button>
-                  <Button variant="default" disabled>
-                    <Clapperboard className="mr-2" />
-                    Generate Video (Coming Soon)
+                  <Button
+                    variant="default"
+                    onClick={handleGenerateVideo}
+                    disabled={
+                      !allImagesGenerated || isGeneratingAll || isGeneratingVideo
+                    }
+                  >
+                    {isGeneratingVideo ? (
+                      <>
+                        <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                        Generating Video...
+                      </>
+                    ) : (
+                      <>
+                        <Clapperboard className="mr-2" />
+                        Generate Video
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>
@@ -254,6 +305,12 @@ export default function ShortsAIScriptPage() {
                   />
                 ))}
               </div>
+            </div>
+          )}
+
+          {!isLoading && videoClips.length > 0 && (
+            <div className="grid gap-6">
+              <VideoPlayer clips={videoClips} segments={segments} />
             </div>
           )}
         </div>
