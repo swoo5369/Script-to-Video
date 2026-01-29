@@ -24,6 +24,7 @@ interface ScriptSegmentCardProps {
   onImageGenerated: (index: number, imageResult: GenerateImageActionResult) => void;
   isGeneratingAll: boolean;
   stylePrompt: string;
+  aspectRatio: string;
 }
 
 export function ScriptSegmentCard({
@@ -35,6 +36,7 @@ export function ScriptSegmentCard({
   onImageGenerated,
   isGeneratingAll,
   stylePrompt,
+  aspectRatio,
 }: ScriptSegmentCardProps) {
   const {toast} = useToast();
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
@@ -62,6 +64,7 @@ export function ScriptSegmentCard({
       return;
     }
     setIsGeneratingImage(true);
+    setGeneratedVideoUrl(null); // Reset video when generating a new image
     try {
       const result = await generateImageAction(segment.imagePrompt);
       onImageGenerated(index, result);
@@ -101,27 +104,33 @@ export function ScriptSegmentCard({
     }
   };
 
-  const handleDownloadImage = () => {
-    if (!generatedImage?.imageUrl) {
-      toast({
-        variant: 'destructive',
-        title: 'Image not available',
-        description: 'Please generate the image first.',
-      });
-      return;
-    }
+  const downloadDataUri = (dataUri: string, fileName: string) => {
     const link = document.createElement('a');
-    link.href = generatedImage.imageUrl;
-    const sanitizedPrompt = segment.imagePrompt
-      .replace(/[^a-z0-9]/gi, '_')
-      .slice(0, 30);
-    link.download = `scene-${index + 1}-${sanitizedPrompt}.png`;
+    link.href = dataUri;
+    link.download = fileName;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleDownloadImage = () => {
+    if (!generatedImage?.imageUrl) return;
+    downloadDataUri(
+      generatedImage.imageUrl,
+      `scene-${index + 1}-image.png`
+    );
     toast({
       title: 'Download Started',
       description: 'Your image is being downloaded.',
+    });
+  };
+
+  const handleDownloadVideo = () => {
+    if (!generatedVideoUrl) return;
+    downloadDataUri(generatedVideoUrl, `scene-${index + 1}-video.mp4`);
+    toast({
+      title: 'Download Started',
+      description: 'Your video clip is being downloaded.',
     });
   };
 
@@ -138,7 +147,8 @@ export function ScriptSegmentCard({
     try {
       const videoUrl = await generateSingleVideoClipAction(
         segment,
-        generatedImage.imageId
+        generatedImage.imageId,
+        aspectRatio
       );
       setGeneratedVideoUrl(videoUrl);
       toast({
@@ -163,12 +173,16 @@ export function ScriptSegmentCard({
     isGeneratingImage || (isGeneratingAll && !generatedImageUrl);
   const isImageReady = !!generatedImageUrl;
   const isVideoReady = !!generatedVideoUrl;
+  const isPortrait = aspectRatio === '9:16';
 
   return (
     <Card className="overflow-hidden shadow-sm transition-shadow hover:shadow-md">
       <CardContent className="p-6">
         <div className="grid gap-6">
-          <div className="relative aspect-video w-full">
+          <div
+            className="relative w-full mx-auto"
+            style={{aspectRatio: isPortrait ? '9 / 16' : '16 / 9'}}
+          >
             {isGeneratingVideo ? (
               <div className="flex h-full w-full flex-col items-center justify-center rounded-lg border bg-muted/50">
                 <RefreshCw className="mb-2 h-8 w-8 animate-spin text-muted-foreground" />
@@ -177,14 +191,32 @@ export function ScriptSegmentCard({
                 </p>
               </div>
             ) : isVideoReady ? (
-              <video
-                key={generatedVideoUrl}
-                src={generatedVideoUrl}
-                controls
-                autoPlay
-                loop
-                className="h-full w-full rounded-lg border object-contain"
-              />
+              <>
+                <video
+                  key={generatedVideoUrl}
+                  src={generatedVideoUrl}
+                  controls
+                  autoPlay
+                  loop
+                  className="h-full w-full rounded-lg border object-contain"
+                />
+                <div className="absolute bottom-2 right-2 flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={handleDownloadVideo}
+                  >
+                    <Download className="mr-2 h-4 w-4" /> Download Clip
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={handleGenerateVideoClip}
+                    disabled={isGeneratingVideo}
+                  >
+                    <RefreshCw className="mr-2 h-4 w-4" /> Regenerate
+                  </Button>
+                </div>
+              </>
             ) : isCurrentlyGeneratingImage ? (
               <div className="flex h-full w-full flex-col items-center justify-center rounded-lg border bg-muted/50">
                 <RefreshCw className="mb-2 h-8 w-8 animate-spin text-muted-foreground" />

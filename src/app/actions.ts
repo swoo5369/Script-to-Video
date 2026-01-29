@@ -54,7 +54,8 @@ export async function rewriteImagePromptAction(
 
 export async function generateVideoAction(
   segments: Segment[],
-  imageIds: Record<number, string>
+  imageIds: Record<number, string>,
+  aspectRatio: string
 ): Promise<GenerateVideoClipsOutput> {
   if (!segments.length || !Object.keys(imageIds).length) {
     throw new Error('Segments and images are required.');
@@ -65,19 +66,22 @@ export async function generateVideoAction(
     throw new Error('Not all images are available for video generation.');
   }
 
-  const videoClipsInput = await Promise.all(
-    segments.map(async (segment, index) => {
-      const imageId = imageIds[index];
-      const tempDir = path.join(os.tmpdir(), 'shorts-ai-script');
-      const filePath = path.join(tempDir, imageId);
-      const imageUrl = await fs.readFile(filePath, 'utf-8');
+  const videoClipsInput = {
+    segments: await Promise.all(
+      segments.map(async (segment, index) => {
+        const imageId = imageIds[index];
+        const tempDir = path.join(os.tmpdir(), 'shorts-ai-script');
+        const filePath = path.join(tempDir, imageId);
+        const imageUrl = await fs.readFile(filePath, 'utf-8');
 
-      return {
-        scriptSegment: segment.scriptSegment,
-        imageUrl: imageUrl,
-      };
-    })
-  );
+        return {
+          scriptSegment: segment.scriptSegment,
+          imageUrl: imageUrl,
+        };
+      })
+    ),
+    aspectRatio: aspectRatio,
+  };
 
   const result = await generateVideoClips(videoClipsInput);
 
@@ -98,7 +102,8 @@ export async function generateVideoAction(
 
 export async function generateSingleVideoClipAction(
   segment: Segment,
-  imageId: string
+  imageId: string,
+  aspectRatio: string
 ): Promise<string> {
   if (!segment || !imageId) {
     throw new Error('Segment and image ID are required.');
@@ -108,12 +113,15 @@ export async function generateSingleVideoClipAction(
   const filePath = path.join(tempDir, imageId);
   const imageUrl = await fs.readFile(filePath, 'utf-8');
 
-  const videoClipsInput = [
-    {
-      scriptSegment: segment.scriptSegment,
-      imageUrl: imageUrl,
-    },
-  ];
+  const videoClipsInput = {
+    segments: [
+      {
+        scriptSegment: segment.scriptSegment,
+        imageUrl: imageUrl,
+      },
+    ],
+    aspectRatio: aspectRatio,
+  };
 
   const result = await generateVideoClips(videoClipsInput);
 

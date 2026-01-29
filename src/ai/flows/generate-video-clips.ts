@@ -10,12 +10,17 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-const GenerateVideoClipsInputSchema = z.array(
-  z.object({
-    scriptSegment: z.string(),
-    imageUrl: z.string(),
-  })
-);
+const GenerateVideoClipsInputSchema = z.object({
+  segments: z.array(
+    z.object({
+      scriptSegment: z.string(),
+      imageUrl: z.string(),
+    })
+  ),
+  aspectRatio: z
+    .string()
+    .describe('The aspect ratio for the video clips, e.g., "16:9" or "9:16".'),
+});
 export type GenerateVideoClipsInput = z.infer<
   typeof GenerateVideoClipsInputSchema
 >;
@@ -69,8 +74,8 @@ const generateVideoClipsFlow = ai.defineFlow(
     inputSchema: GenerateVideoClipsInputSchema,
     outputSchema: GenerateVideoClipsOutputSchema,
   },
-  async segments => {
-    const operationPromises = segments.map(segment => {
+  async input => {
+    const operationPromises = input.segments.map(segment => {
       const mimeType = segment.imageUrl.substring(
         segment.imageUrl.indexOf(':') + 1,
         segment.imageUrl.indexOf(';')
@@ -90,7 +95,7 @@ const generateVideoClipsFlow = ai.defineFlow(
         ],
         config: {
           durationSeconds: 5,
-          aspectRatio: '16:9',
+          aspectRatio: input.aspectRatio,
         },
       });
     });

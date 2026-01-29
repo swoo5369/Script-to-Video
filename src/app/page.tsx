@@ -24,6 +24,7 @@ import {Logo} from '@/components/logo';
 import {Wand2, Clapperboard, RefreshCw, Camera} from 'lucide-react';
 import {VideoPlayer} from '@/components/video-player';
 import {Label} from '@/components/ui/label';
+import {RadioGroup, RadioGroupItem} from '@/components/ui/radio-group';
 
 export default function ShortsAIScriptPage() {
   const [script, setScript] = useState('');
@@ -36,6 +37,7 @@ export default function ShortsAIScriptPage() {
   const [isGeneratingAll, setIsGeneratingAll] = useState(false);
   const [videoClips, setVideoClips] = useState<string[]>([]);
   const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
+  const [aspectRatio, setAspectRatio] = useState('16:9');
   const {toast} = useToast();
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -161,7 +163,7 @@ export default function ShortsAIScriptPage() {
           imageId,
         ])
       );
-      const result = await generateVideoAction(segments, imageIds);
+      const result = await generateVideoAction(segments, imageIds, aspectRatio);
       setVideoClips(result.map(clip => clip.videoUrl));
       toast({
         title: 'Video Generated!',
@@ -282,46 +284,72 @@ export default function ShortsAIScriptPage() {
 
           {!isLoading && segments.length > 0 && (
             <div className="grid gap-6">
-              <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <h2 className="text-2xl font-bold tracking-tight font-headline">
                   Your AI-Powered Storyboard
                 </h2>
-                <div className="flex items-center gap-2">
-                  <Button
-                    onClick={handleGenerateAllImages}
-                    disabled={isGeneratingAll || segments.length === 0}
-                  >
-                    {isGeneratingAll ? (
-                      <>
-                        <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                        Generating Images...
-                      </>
-                    ) : (
-                      <>
-                        <Camera className="mr-2" />
-                        Generate All Images
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    variant="default"
-                    onClick={handleGenerateVideo}
-                    disabled={
-                      !allImagesGenerated || isGeneratingAll || isGeneratingVideo
-                    }
-                  >
-                    {isGeneratingVideo ? (
-                      <>
-                        <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                        Generating Video...
-                      </>
-                    ) : (
-                      <>
-                        <Clapperboard className="mr-2" />
-                        Generate Video
-                      </>
-                    )}
-                  </Button>
+                <div className="flex flex-wrap items-center justify-end gap-4">
+                  <div className="flex items-center gap-2">
+                    <Label className="text-sm font-medium">Aspect Ratio</Label>
+                    <RadioGroup
+                      value={aspectRatio}
+                      onValueChange={setAspectRatio}
+                      className="flex items-center gap-4"
+                      disabled={isGeneratingVideo || isGeneratingAll}
+                    >
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="16:9" id="r1" />
+                        <Label htmlFor="r1" className="cursor-pointer">
+                          Landscape
+                        </Label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="9:16" id="r2" />
+                        <Label htmlFor="r2" className="cursor-pointer">
+                          Portrait
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      onClick={handleGenerateAllImages}
+                      disabled={isGeneratingAll || segments.length === 0}
+                    >
+                      {isGeneratingAll ? (
+                        <>
+                          <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                          Generating Images...
+                        </>
+                      ) : (
+                        <>
+                          <Camera className="mr-2" />
+                          Generate All Images
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      variant="default"
+                      onClick={handleGenerateVideo}
+                      disabled={
+                        !allImagesGenerated ||
+                        isGeneratingAll ||
+                        isGeneratingVideo
+                      }
+                    >
+                      {isGeneratingVideo ? (
+                        <>
+                          <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                          Generating Video...
+                        </>
+                      ) : (
+                        <>
+                          <Clapperboard className="mr-2" />
+                          Generate Video
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
               </div>
               <div className="grid gap-6">
@@ -336,6 +364,7 @@ export default function ShortsAIScriptPage() {
                     onImageGenerated={handleImageGenerated}
                     isGeneratingAll={isGeneratingAll}
                     stylePrompt={stylePrompt}
+                    aspectRatio={aspectRatio}
                   />
                 ))}
               </div>
@@ -344,7 +373,11 @@ export default function ShortsAIScriptPage() {
 
           {!isLoading && videoClips.length > 0 && (
             <div className="grid gap-6">
-              <VideoPlayer clips={videoClips} segments={segments} />
+              <VideoPlayer
+                clips={videoClips}
+                segments={segments}
+                aspectRatio={aspectRatio}
+              />
             </div>
           )}
         </div>
