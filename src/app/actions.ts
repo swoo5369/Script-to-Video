@@ -15,14 +15,8 @@ export async function generateSegments(
     throw new Error('Script cannot be empty.');
   }
 
-  try {
-    const segments = await segmentNarrationScript({narrationScript});
-    return segments;
-  } catch (error) {
-    console.error('Error in generateSegments action:', error);
-    // Throw a more generic error to the client
-    throw new Error('Failed to process script with the AI model.');
-  }
+  const segments = await segmentNarrationScript({narrationScript});
+  return segments;
 }
 
 export async function generateImageAction(
@@ -32,13 +26,8 @@ export async function generateImageAction(
     throw new Error('Prompt cannot be empty.');
   }
 
-  try {
-    const result = await generateImage({prompt});
-    return result;
-  } catch (error) {
-    console.error('Error in generateImageAction:', error);
-    throw new Error('Failed to generate image with the AI model.');
-  }
+  const result = await generateImage({prompt});
+  return result;
 }
 
 export async function generateVideoAction(
@@ -59,11 +48,6 @@ export async function generateVideoAction(
     imageUrl: images[index],
   }));
 
-  try {
-    const result = await generateVideoClips(videoClipsInput);
-    return result;
-  } catch (error) {
-    console.error('Error in generateVideoAction:', error);
-    throw new Error('Failed to generate video with the AI model.');
-  }
+  const result = await generateVideoClips(videoClipsInput);
+  return result;
 }
