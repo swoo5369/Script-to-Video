@@ -383,7 +383,17 @@ export default function ShortsAIScriptPage() {
         </div>
       </main>
       <footer className="border-t py-6 text-center text-sm text-muted-foreground">
-        <p>Created with Shorts AI Script</p>
+        <p>
+          Created with{' '}
+          <a
+            href="https://firebase.google.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-primary"
+          >
+            Shorts AI Script
+          </a>
+        </p>
       </footer>
     </div>
   );
