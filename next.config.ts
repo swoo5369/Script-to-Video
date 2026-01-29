@@ -1,4 +1,5 @@
-module.exports = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   serverActions: {
     bodySizeLimit: false,
   },
@@ -31,3 +32,5 @@ module.exports = {
     ],
   },
 };
+
+module.exports = nextConfig;
