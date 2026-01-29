@@ -71,6 +71,10 @@ const generateVideoClipsFlow = ai.defineFlow(
   },
   async segments => {
     const operationPromises = segments.map(segment => {
+      const mimeType = segment.imageUrl.substring(
+        segment.imageUrl.indexOf(':') + 1,
+        segment.imageUrl.indexOf(';')
+      );
       return ai.generate({
         model: 'googleai/veo-2.0-generate-001',
         prompt: [
@@ -79,6 +83,7 @@ const generateVideoClipsFlow = ai.defineFlow(
           },
           {
             media: {
+              contentType: mimeType,
               url: segment.imageUrl,
             },
           },
