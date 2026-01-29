@@ -5,7 +5,7 @@ import {Card, CardContent} from '@/components/ui/card';
 import {Textarea} from '@/components/ui/textarea';
 import {Label} from '@/components/ui/label';
 import {useToast} from '@/hooks/use-toast';
-import {Copy, Camera, RefreshCw} from 'lucide-react';
+import {Copy, Camera, RefreshCw, Image as ImageIcon} from 'lucide-react';
 import type {Segment} from '@/lib/types';
 import {generateImageAction} from '@/app/actions';
 import {useState} from 'react';
@@ -135,15 +135,12 @@ export function ScriptSegmentCard({
               data-ai-hint={imageHint}
             />
           ) : (
-            <Image
-              src={`https://picsum.photos/seed/${index + 1}/600/338`}
-              alt="Placeholder"
-              width={600}
-              height={338}
-              className="rounded-lg border object-cover"
-              data-ai-hint={imageHint}
-              priority={index < 3}
-            />
+            <div className="flex h-full w-full flex-col items-center justify-center rounded-lg border border-dashed bg-muted/50">
+              <ImageIcon className="h-12 w-12 text-muted-foreground" />
+              <p className="mt-2 text-sm text-muted-foreground">
+                Click "Generate Image" to create a visual.
+              </p>
+            </div>
           )}
 
           <div className="absolute bottom-2 right-2 flex gap-2">
