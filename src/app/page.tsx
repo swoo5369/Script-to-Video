@@ -15,6 +15,7 @@ import {
   generateSegments,
   generateImageAction,
   generateVideoAction,
+  type GenerateImageActionResult,
 } from './actions';
 import type {Segment} from '@/lib/types';
 import {ScriptSegmentCard} from '@/components/script-segment-card';
@@ -29,9 +30,9 @@ export default function ShortsAIScriptPage() {
   const [stylePrompt, setStylePrompt] = useState('');
   const [segments, setSegments] = useState<Segment[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [generatedImages, setGeneratedImages] = useState<Record<number, string>>(
-    {}
-  );
+  const [generatedImages, setGeneratedImages] = useState<
+    Record<number, GenerateImageActionResult>
+  >({});
   const [isGeneratingAll, setIsGeneratingAll] = useState(false);
   const [videoClips, setVideoClips] = useState<string[]>([]);
   const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
@@ -78,15 +79,21 @@ export default function ShortsAIScriptPage() {
     );
   };
 
-  const handleImageGenerated = (index: number, imageUrl: string) => {
-    setGeneratedImages(prev => ({...prev, [index]: imageUrl}));
+  const handleImageGenerated = (
+    index: number,
+    imageResult: GenerateImageActionResult
+  ) => {
+    setGeneratedImages(prev => ({...prev, [index]: imageResult}));
   };
 
   const handleGenerateAllImages = async () => {
     if (segments.length === 0) return;
 
     setIsGeneratingAll(true);
-    const promises: Promise<{index: number; imageUrl: string} | null>[] = [];
+    const promises: Promise<{
+      index: number;
+      imageResult: GenerateImageActionResult;
+    } | null>[] = [];
 
     segments.forEach((segment, index) => {
       if (!generatedImages[index] && segment.imagePrompt) {
@@ -94,7 +101,7 @@ export default function ShortsAIScriptPage() {
           generateImageAction(segment.imagePrompt)
             .then(result => ({
               index,
-              imageUrl: result.imageUrl,
+              imageResult: result,
             }))
             .catch(err => {
               console.error(`Failed to generate image for segment ${index}`, err);
@@ -120,10 +127,10 @@ export default function ShortsAIScriptPage() {
 
       const newImages = results.reduce((acc, result) => {
         if (result) {
-          acc[result.index] = result.imageUrl;
+          acc[result.index] = result.imageResult;
         }
         return acc;
-      }, {} as Record<number, string>);
+      }, {} as Record<number, GenerateImageActionResult>);
 
       setGeneratedImages(prev => ({...prev, ...newImages}));
     } catch (error) {
@@ -148,7 +155,13 @@ export default function ShortsAIScriptPage() {
     setVideoClips([]);
 
     try {
-      const result = await generateVideoAction(segments, generatedImages);
+      const imageIds = Object.fromEntries(
+        Object.entries(generatedImages).map(([index, {imageId}]) => [
+          index,
+          imageId,
+        ])
+      );
+      const result = await generateVideoAction(segments, imageIds);
       setVideoClips(result.map(clip => clip.videoUrl));
       toast({
         title: 'Video Generated!',
@@ -319,7 +332,7 @@ export default function ShortsAIScriptPage() {
                     index={index}
                     onPromptChange={handlePromptChange}
                     onScriptChange={handleScriptChange}
-                    generatedImageUrl={generatedImages[index]}
+                    generatedImage={generatedImages[index]}
                     onImageGenerated={handleImageGenerated}
                     isGeneratingAll={isGeneratingAll}
                     stylePrompt={stylePrompt}

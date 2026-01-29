@@ -1,13 +1,21 @@
 'use server';
 
+import {promises as fs} from 'fs';
+import path from 'path';
+import os from 'os';
+import {v4 as uuidv4} from 'uuid';
 import {segmentNarrationScript} from '@/ai/flows/segment-narration-script';
 import type {SegmentNarrationScriptOutput} from '@/ai/flows/segment-narration-script';
 import {generateImage} from '@/ai/flows/generate-image';
-import type {GenerateImageOutput} from '@/ai/flows/generate-image';
 import {generateVideoClips} from '@/ai/flows/generate-video-clips';
 import type {GenerateVideoClipsOutput} from '@/ai/flows/generate-video-clips';
 import {rewriteImagePrompt} from '@/ai/flows/rewrite-image-prompt';
 import type {Segment} from '@/lib/types';
+
+export type GenerateImageActionResult = {
+  imageUrl: string;
+  imageId: string;
+};
 
 export async function generateSegments(
   narrationScript: string,
@@ -23,9 +31,17 @@ export async function generateSegments(
 
 export async function generateImageAction(
   prompt: string
-): Promise<GenerateImageOutput> {
+): Promise<GenerateImageActionResult> {
   const result = await generateImage({prompt});
-  return result;
+  const imageUrl = result.imageUrl;
+
+  const imageId = uuidv4() + '.txt';
+  const tempDir = path.join(os.tmpdir(), 'shorts-ai-script');
+  await fs.mkdir(tempDir, {recursive: true});
+  const filePath = path.join(tempDir, imageId);
+  await fs.writeFile(filePath, imageUrl);
+
+  return {imageUrl, imageId};
 }
 
 export async function rewriteImagePromptAction(
@@ -38,33 +54,59 @@ export async function rewriteImagePromptAction(
 
 export async function generateVideoAction(
   segments: Segment[],
-  images: Record<number, string>
+  imageIds: Record<number, string>
 ): Promise<GenerateVideoClipsOutput> {
-  if (!segments.length || !Object.keys(images).length) {
+  if (!segments.length || !Object.keys(imageIds).length) {
     throw new Error('Segments and images are required.');
   }
 
-  const allImagesAvailable = segments.every((_, index) => images[index]);
+  const allImagesAvailable = segments.every((_, index) => imageIds[index]);
   if (!allImagesAvailable) {
     throw new Error('Not all images are available for video generation.');
   }
 
-  const videoClipsInput = segments.map((segment, index) => ({
-    scriptSegment: segment.scriptSegment,
-    imageUrl: images[index],
-  }));
+  const videoClipsInput = await Promise.all(
+    segments.map(async (segment, index) => {
+      const imageId = imageIds[index];
+      const tempDir = path.join(os.tmpdir(), 'shorts-ai-script');
+      const filePath = path.join(tempDir, imageId);
+      const imageUrl = await fs.readFile(filePath, 'utf-8');
+
+      return {
+        scriptSegment: segment.scriptSegment,
+        imageUrl: imageUrl,
+      };
+    })
+  );
 
   const result = await generateVideoClips(videoClipsInput);
+
+  await Promise.all(
+    Object.values(imageIds).map(async imageId => {
+      const tempDir = path.join(os.tmpdir(), 'shorts-ai-script');
+      const filePath = path.join(tempDir, imageId);
+      try {
+        await fs.unlink(filePath);
+      } catch (e) {
+        console.warn(`Failed to delete temp file ${filePath}`, e);
+      }
+    })
+  );
+
   return result;
 }
 
 export async function generateSingleVideoClipAction(
   segment: Segment,
-  imageUrl: string
+  imageId: string
 ): Promise<string> {
-  if (!segment || !imageUrl) {
-    throw new Error('Segment and image URL are required.');
+  if (!segment || !imageId) {
+    throw new Error('Segment and image ID are required.');
   }
+
+  const tempDir = path.join(os.tmpdir(), 'shorts-ai-script');
+  const filePath = path.join(tempDir, imageId);
+  const imageUrl = await fs.readFile(filePath, 'utf-8');
 
   const videoClipsInput = [
     {

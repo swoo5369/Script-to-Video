@@ -11,6 +11,7 @@ import {
   generateImageAction,
   rewriteImagePromptAction,
   generateSingleVideoClipAction,
+  type GenerateImageActionResult,
 } from '@/app/actions';
 import {useState} from 'react';
 
@@ -19,8 +20,8 @@ interface ScriptSegmentCardProps {
   index: number;
   onPromptChange: (index: number, newPrompt: string) => void;
   onScriptChange: (index: number, newScript: string) => void;
-  generatedImageUrl?: string;
-  onImageGenerated: (index: number, imageUrl: string) => void;
+  generatedImage?: GenerateImageActionResult;
+  onImageGenerated: (index: number, imageResult: GenerateImageActionResult) => void;
   isGeneratingAll: boolean;
   stylePrompt: string;
 }
@@ -30,7 +31,7 @@ export function ScriptSegmentCard({
   index,
   onPromptChange,
   onScriptChange,
-  generatedImageUrl,
+  generatedImage,
   onImageGenerated,
   isGeneratingAll,
   stylePrompt,
@@ -63,7 +64,7 @@ export function ScriptSegmentCard({
     setIsGeneratingImage(true);
     try {
       const result = await generateImageAction(segment.imagePrompt);
-      onImageGenerated(index, result.imageUrl);
+      onImageGenerated(index, result);
     } catch (error) {
       console.error(error);
       toast({
@@ -101,7 +102,7 @@ export function ScriptSegmentCard({
   };
 
   const handleDownloadImage = () => {
-    if (!generatedImageUrl) {
+    if (!generatedImage?.imageUrl) {
       toast({
         variant: 'destructive',
         title: 'Image not available',
@@ -110,7 +111,7 @@ export function ScriptSegmentCard({
       return;
     }
     const link = document.createElement('a');
-    link.href = generatedImageUrl;
+    link.href = generatedImage.imageUrl;
     const sanitizedPrompt = segment.imagePrompt
       .replace(/[^a-z0-9]/gi, '_')
       .slice(0, 30);
@@ -125,7 +126,7 @@ export function ScriptSegmentCard({
   };
 
   const handleGenerateVideoClip = async () => {
-    if (!generatedImageUrl) {
+    if (!generatedImage?.imageId) {
       toast({
         variant: 'destructive',
         title: 'Image not available',
@@ -137,7 +138,7 @@ export function ScriptSegmentCard({
     try {
       const videoUrl = await generateSingleVideoClipAction(
         segment,
-        generatedImageUrl
+        generatedImage.imageId
       );
       setGeneratedVideoUrl(videoUrl);
       toast({
@@ -156,6 +157,7 @@ export function ScriptSegmentCard({
     }
   };
 
+  const generatedImageUrl = generatedImage?.imageUrl;
   const imageHint = segment.imagePrompt.split(' ').slice(0, 2).join(' ');
   const isCurrentlyGeneratingImage =
     isGeneratingImage || (isGeneratingAll && !generatedImageUrl);
