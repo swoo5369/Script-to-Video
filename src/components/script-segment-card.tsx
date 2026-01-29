@@ -7,7 +7,7 @@ import {Label} from '@/components/ui/label';
 import {useToast} from '@/hooks/use-toast';
 import {Copy, Camera, RefreshCw} from 'lucide-react';
 import type {Segment} from '@/lib/types';
-import {generateImageAction} from '@/app/actions';
+import {generateImageAction, rewriteImagePromptAction} from '@/app/actions';
 import {useState} from 'react';
 
 interface ScriptSegmentCardProps {
@@ -18,6 +18,7 @@ interface ScriptSegmentCardProps {
   generatedImageUrl?: string;
   onImageGenerated: (index: number, imageUrl: string) => void;
   isGeneratingAll: boolean;
+  stylePrompt: string;
 }
 
 export function ScriptSegmentCard({
@@ -28,9 +29,11 @@ export function ScriptSegmentCard({
   generatedImageUrl,
   onImageGenerated,
   isGeneratingAll,
+  stylePrompt,
 }: ScriptSegmentCardProps) {
   const {toast} = useToast();
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [isRewritingPrompt, setIsRewritingPrompt] = useState(false);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(segment.imagePrompt);
@@ -62,6 +65,30 @@ export function ScriptSegmentCard({
       });
     } finally {
       setIsGeneratingImage(false);
+    }
+  };
+
+  const handleRewritePrompt = async () => {
+    setIsRewritingPrompt(true);
+    try {
+      const newPrompt = await rewriteImagePromptAction(
+        segment.scriptSegment,
+        stylePrompt
+      );
+      onPromptChange(index, newPrompt);
+      toast({
+        title: 'Prompt Rewritten!',
+        description: 'The image prompt has been updated.',
+      });
+    } catch (error) {
+      console.error(error);
+      toast({
+        variant: 'destructive',
+        title: 'Error rewriting prompt',
+        description: 'Please try again.',
+      });
+    } finally {
+      setIsRewritingPrompt(false);
     }
   };
 
@@ -131,12 +158,27 @@ export function ScriptSegmentCard({
           </div>
 
           <div className="grid gap-2">
-            <Label
-              htmlFor={`prompt-${index}`}
-              className="text-sm font-semibold text-muted-foreground"
-            >
-              Image Prompt
-            </Label>
+            <div className="flex items-center justify-between">
+              <Label
+                htmlFor={`prompt-${index}`}
+                className="text-sm font-semibold text-muted-foreground"
+              >
+                Image Prompt
+              </Label>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRewritePrompt}
+                disabled={isRewritingPrompt}
+              >
+                {isRewritingPrompt ? (
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                )}
+                Rewrite
+              </Button>
+            </div>
             <div className="relative">
               <Textarea
                 id={`prompt-${index}`}
@@ -144,6 +186,7 @@ export function ScriptSegmentCard({
                 onChange={e => onPromptChange(index, e.target.value)}
                 rows={5}
                 className="pr-12 resize-none mt-1"
+                disabled={isRewritingPrompt}
               />
               <Button
                 variant="ghost"

@@ -322,6 +322,7 @@ export default function ShortsAIScriptPage() {
                     generatedImageUrl={generatedImages[index]}
                     onImageGenerated={handleImageGenerated}
                     isGeneratingAll={isGeneratingAll}
+                    stylePrompt={stylePrompt}
                   />
                 ))}
               </div>

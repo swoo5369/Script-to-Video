@@ -6,6 +6,7 @@ import {generateImage} from '@/ai/flows/generate-image';
 import type {GenerateImageOutput} from '@/ai/flows/generate-image';
 import {generateVideoClips} from '@/ai/flows/generate-video-clips';
 import type {GenerateVideoClipsOutput} from '@/ai/flows/generate-video-clips';
+import {rewriteImagePrompt} from '@/ai/flows/rewrite-image-prompt';
 import type {Segment} from '@/lib/types';
 
 export async function generateSegments(
@@ -25,6 +26,14 @@ export async function generateImageAction(
 ): Promise<GenerateImageOutput> {
   const result = await generateImage({prompt});
   return result;
+}
+
+export async function rewriteImagePromptAction(
+  scriptSegment: string,
+  stylePrompt: string
+): Promise<string> {
+  const result = await rewriteImagePrompt({scriptSegment, stylePrompt});
+  return result.imagePrompt;
 }
 
 export async function generateVideoAction(
