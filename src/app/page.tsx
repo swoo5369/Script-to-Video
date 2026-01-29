@@ -11,17 +11,21 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import {useToast} from '@/hooks/use-toast';
-import {generateSegments} from './actions';
+import {generateSegments, generateImageAction} from './actions';
 import type {Segment} from '@/lib/types';
 import {ScriptSegmentCard} from '@/components/script-segment-card';
 import {Skeleton} from '@/components/ui/skeleton';
 import {Logo} from '@/components/logo';
-import {Wand2, Clapperboard, RefreshCw} from 'lucide-react';
+import {Wand2, Clapperboard, RefreshCw, Camera} from 'lucide-react';
 
 export default function ShortsAIScriptPage() {
   const [script, setScript] = useState('');
   const [segments, setSegments] = useState<Segment[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [generatedImages, setGeneratedImages] = useState<Record<number, string>>(
+    {}
+  );
+  const [isGeneratingAll, setIsGeneratingAll] = useState(false);
   const {toast} = useToast();
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -29,7 +33,8 @@ export default function ShortsAIScriptPage() {
     if (!script.trim() || isLoading) return;
 
     setIsLoading(true);
-    setSegments([]); // Clear previous results
+    setSegments([]);
+    setGeneratedImages({});
 
     try {
       const result = await generateSegments(script);
@@ -53,6 +58,74 @@ export default function ShortsAIScriptPage() {
         i === index ? {...segment, imagePrompt: newPrompt} : segment
       )
     );
+  };
+
+  const handleScriptChange = (index: number, newScript: string) => {
+    setSegments(prevSegments =>
+      prevSegments.map((segment, i) =>
+        i === index ? {...segment, scriptSegment: newScript} : segment
+      )
+    );
+  };
+
+  const handleImageGenerated = (index: number, imageUrl: string) => {
+    setGeneratedImages(prev => ({...prev, [index]: imageUrl}));
+  };
+
+  const handleGenerateAllImages = async () => {
+    if (segments.length === 0) return;
+
+    setIsGeneratingAll(true);
+    const promises: Promise<{index: number; imageUrl: string} | null>[] = [];
+
+    segments.forEach((segment, index) => {
+      if (!generatedImages[index] && segment.imagePrompt) {
+        promises.push(
+          generateImageAction(segment.imagePrompt)
+            .then(result => ({
+              index,
+              imageUrl: result.imageUrl,
+            }))
+            .catch(err => {
+              console.error(`Failed to generate image for segment ${index}`, err);
+              toast({
+                variant: 'destructive',
+                title: `Error for Scene ${index + 1}`,
+                description: 'Image generation failed.',
+              });
+              return null; // Don't let one failure stop all
+            })
+        );
+      }
+    });
+
+    if (promises.length === 0) {
+      setIsGeneratingAll(false);
+      toast({title: 'All images already generated.'});
+      return;
+    }
+
+    try {
+      const results = await Promise.all(promises);
+
+      const newImages = results.reduce((acc, result) => {
+        if (result) {
+          acc[result.index] = result.imageUrl;
+        }
+        return acc;
+      }, {} as Record<number, string>);
+
+      setGeneratedImages(prev => ({...prev, ...newImages}));
+    } catch (error) {
+      console.error(error);
+      toast({
+        variant: 'destructive',
+        title: 'Error Generating Images',
+        description: 'One or more images failed to generate. Please try again.',
+      });
+    } finally {
+      setIsGeneratingAll(false);
+    }
   };
 
   return (
@@ -100,7 +173,9 @@ export default function ShortsAIScriptPage() {
                     ) : (
                       <>
                         <Wand2 className="mr-2" />
-                        {segments.length > 0 ? 'Regenerate Script' : 'Generate Script'}
+                        {segments.length > 0
+                          ? 'Regenerate Script'
+                          : 'Generate Script'}
                       </>
                     )}
                   </Button>
@@ -140,10 +215,28 @@ export default function ShortsAIScriptPage() {
                 <h2 className="text-2xl font-bold tracking-tight font-headline">
                   Your AI-Powered Storyboard
                 </h2>
-                <Button variant="default" disabled>
-                  <Clapperboard className="mr-2" />
-                  Generate Video (Coming Soon)
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={handleGenerateAllImages}
+                    disabled={isGeneratingAll || segments.length === 0}
+                  >
+                    {isGeneratingAll ? (
+                      <>
+                        <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                        Generating Images...
+                      </>
+                    ) : (
+                      <>
+                        <Camera className="mr-2" />
+                        Generate All Images
+                      </>
+                    )}
+                  </Button>
+                  <Button variant="default" disabled>
+                    <Clapperboard className="mr-2" />
+                    Generate Video (Coming Soon)
+                  </Button>
+                </div>
               </div>
               <div className="grid gap-6">
                 {segments.map((segment, index) => (
@@ -152,14 +245,12 @@ export default function ShortsAIScriptPage() {
                     segment={segment}
                     index={index}
                     onPromptChange={handlePromptChange}
+                    onScriptChange={handleScriptChange}
+                    generatedImageUrl={generatedImages[index]}
+                    onImageGenerated={handleImageGenerated}
+                    isGeneratingAll={isGeneratingAll}
                   />
                 ))}
-              </div>
-              <div className="flex justify-end">
-                <Button size="lg" disabled>
-                  <Clapperboard className="mr-2" />
-                  Generate Video (Coming Soon)
-                </Button>
               </div>
             </div>
           )}
