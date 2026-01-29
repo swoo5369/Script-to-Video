@@ -1,4 +1,4 @@
-const nextConfig = {
+module.exports = {
   serverActions: {
     bodySizeLimit: false,
   },
@@ -31,5 +31,3 @@ const nextConfig = {
     ],
   },
 };
-
-module.exports = nextConfig;
