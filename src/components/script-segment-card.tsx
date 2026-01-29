@@ -3,10 +3,9 @@ import Image from 'next/image';
 import {Button} from '@/components/ui/button';
 import {Card, CardContent} from '@/components/ui/card';
 import {Textarea} from '@/components/ui/textarea';
-import {Badge} from '@/components/ui/badge';
 import {Label} from '@/components/ui/label';
 import {useToast} from '@/hooks/use-toast';
-import {Copy, Bot, Camera, RefreshCw} from 'lucide-react';
+import {Copy, Camera, RefreshCw} from 'lucide-react';
 import type {Segment} from '@/lib/types';
 import {generateImageAction} from '@/app/actions';
 import {useState} from 'react';
@@ -72,7 +71,52 @@ export function ScriptSegmentCard({
 
   return (
     <Card className="overflow-hidden shadow-sm transition-shadow hover:shadow-md">
-      <CardContent className="grid items-start gap-6 p-6 md:grid-cols-[300px_1fr]">
+      <CardContent className="grid items-start gap-6 p-6 md:grid-cols-[1fr_300px]">
+        <div className="grid gap-4">
+          <div>
+            <Label
+              htmlFor={`script-${index}`}
+              className="text-sm font-semibold text-muted-foreground"
+            >
+              Scene {index + 1} - Narration
+            </Label>
+            <Textarea
+              id={`script-${index}`}
+              value={segment.scriptSegment}
+              onChange={e => onScriptChange(index, e.target.value)}
+              rows={3}
+              className="mt-1 resize-none"
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <Label
+              htmlFor={`prompt-${index}`}
+              className="text-sm font-semibold text-muted-foreground"
+            >
+              Image Prompt
+            </Label>
+            <div className="relative">
+              <Textarea
+                id={`prompt-${index}`}
+                value={segment.imagePrompt}
+                onChange={e => onPromptChange(index, e.target.value)}
+                rows={4}
+                className="pr-12 resize-none"
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-2 top-2 h-8 w-8 text-muted-foreground hover:text-foreground"
+                onClick={handleCopy}
+                aria-label="Copy prompt"
+              >
+                <Copy className="h-4 w-4" />
+                <span className="sr-only">Copy prompt</span>
+              </Button>
+            </div>
+          </div>
+        </div>
         <div className="relative aspect-video w-full">
           {isCurrentlyGenerating ? (
             <div className="flex h-full w-full flex-col items-center justify-center rounded-lg border bg-muted/50">
@@ -126,64 +170,6 @@ export function ScriptSegmentCard({
               )}
             </Button>
           </div>
-        </div>
-
-        <div className="grid gap-4">
-          <div>
-            <Label
-              htmlFor={`script-${index}`}
-              className="text-sm font-semibold text-muted-foreground"
-            >
-              Scene {index + 1} - Narration
-            </Label>
-            <Textarea
-              id={`script-${index}`}
-              value={segment.scriptSegment}
-              onChange={e => onScriptChange(index, e.target.value)}
-              rows={3}
-              className="mt-1 resize-none"
-            />
-          </div>
-
-          <div className="grid gap-2">
-            <Label
-              htmlFor={`prompt-${index}`}
-              className="text-sm font-semibold text-muted-foreground"
-            >
-              Image Prompt
-            </Label>
-            <div className="relative">
-              <Textarea
-                id={`prompt-${index}`}
-                value={segment.imagePrompt}
-                onChange={e => onPromptChange(index, e.target.value)}
-                rows={4}
-                className="pr-12 resize-none"
-              />
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute right-2 top-2 h-8 w-8 text-muted-foreground hover:text-foreground"
-                onClick={handleCopy}
-                aria-label="Copy prompt"
-              >
-                <Copy className="h-4 w-4" />
-                <span className="sr-only">Copy prompt</span>
-              </Button>
-            </div>
-          </div>
-
-          {segment.suggestedAiTool && (
-            <div className="flex items-center gap-2">
-              <Bot className="h-5 w-5 text-accent" />
-              <Badge
-                variant="outline"
-                className="border-accent/50 bg-accent/10 font-semibold text-accent"
-              >
-                Suggested Tool: {segment.suggestedAiTool}
-              </Badge>
-            </div>
-          )}
         </div>
       </CardContent>
     </Card>

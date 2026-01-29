@@ -192,16 +192,13 @@ export default function ShortsAIScriptPage() {
               <div className="grid gap-6">
                 {[...Array(3)].map((_, i) => (
                   <Card key={i}>
-                    <CardContent className="grid gap-6 p-6 md:grid-cols-[300px_1fr] md:items-start">
-                      <Skeleton className="aspect-video w-full rounded-lg" />
+                    <CardContent className="grid gap-6 p-6 md:grid-cols-[1fr_300px] md:items-start">
                       <div className="grid gap-4">
                         <Skeleton className="h-5 w-1/4" />
                         <Skeleton className="h-12 w-full" />
                         <Skeleton className="h-20 w-full" />
-                        <div className="flex items-center gap-2">
-                          <Skeleton className="h-6 w-32 rounded-full" />
-                        </div>
                       </div>
+                      <Skeleton className="aspect-video w-full rounded-lg" />
                     </CardContent>
                   </Card>
                 ))}

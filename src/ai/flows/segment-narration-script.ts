@@ -20,11 +20,14 @@ export type SegmentNarrationScriptInput = z.infer<
   typeof SegmentNarrationScriptInputSchema
 >;
 
-const SegmentNarrationScriptOutputSchema = z.array(z.object({
-  scriptSegment: z.string().describe('A segment of the narration script.'),
-  imagePrompt: z.string().describe('An image prompt corresponding to the script segment.'),
-  suggestedAiTool: z.string().optional().describe('Suggested AI tool to use for the image prompt.')
-}));
+const SegmentNarrationScriptOutputSchema = z.array(
+  z.object({
+    scriptSegment: z.string().describe('A segment of the narration script.'),
+    imagePrompt: z
+      .string()
+      .describe('An image prompt corresponding to the script segment.'),
+  })
+);
 export type SegmentNarrationScriptOutput = z.infer<
   typeof SegmentNarrationScriptOutputSchema
 >;
@@ -43,12 +46,10 @@ const segmentNarrationScriptPrompt = ai.definePrompt({
 
   For each segment, create an image prompt that accurately reflects the content of the segment.
   The image prompt should be detailed and suitable for use with AI image generation tools, including clear descriptions of subjects, actions, environments, and styles.
-  Also, suggest an AI image generation tool that would be suitable for the generated prompt.
 
   Output the result as a JSON array of objects with the following keys:
   - scriptSegment: The segment of the narration script.
   - imagePrompt: The image prompt for the segment.
-  - suggestedAiTool: Suggested AI tool to use for the image prompt.
 
   Narration Script: {{{narrationScript}}}
   `,
