@@ -71,52 +71,7 @@ export function ScriptSegmentCard({
 
   return (
     <Card className="overflow-hidden shadow-sm transition-shadow hover:shadow-md">
-      <CardContent className="grid items-start gap-6 p-6 md:grid-cols-[1fr_300px]">
-        <div className="grid gap-4">
-          <div>
-            <Label
-              htmlFor={`script-${index}`}
-              className="text-sm font-semibold text-muted-foreground"
-            >
-              Scene {index + 1} - Narration
-            </Label>
-            <Textarea
-              id={`script-${index}`}
-              value={segment.scriptSegment}
-              onChange={e => onScriptChange(index, e.target.value)}
-              rows={3}
-              className="mt-1 resize-none"
-            />
-          </div>
-
-          <div className="grid gap-2">
-            <Label
-              htmlFor={`prompt-${index}`}
-              className="text-sm font-semibold text-muted-foreground"
-            >
-              Image Prompt
-            </Label>
-            <div className="relative">
-              <Textarea
-                id={`prompt-${index}`}
-                value={segment.imagePrompt}
-                onChange={e => onPromptChange(index, e.target.value)}
-                rows={4}
-                className="pr-12 resize-none"
-              />
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute right-2 top-2 h-8 w-8 text-muted-foreground hover:text-foreground"
-                onClick={handleCopy}
-                aria-label="Copy prompt"
-              >
-                <Copy className="h-4 w-4" />
-                <span className="sr-only">Copy prompt</span>
-              </Button>
-            </div>
-          </div>
-        </div>
+      <CardContent className="grid gap-6 p-6">
         <div className="relative aspect-video w-full">
           {isCurrentlyGenerating ? (
             <div className="flex h-full w-full flex-col items-center justify-center rounded-lg border bg-muted/50">
@@ -129,8 +84,7 @@ export function ScriptSegmentCard({
             <Image
               src={generatedImageUrl}
               alt={segment.imagePrompt}
-              width={600}
-              height={338}
+              fill
               className="rounded-lg border object-cover"
               data-ai-hint={imageHint}
             />
@@ -166,6 +120,51 @@ export function ScriptSegmentCard({
                 </>
               )}
             </Button>
+          </div>
+        </div>
+        <div className="grid gap-6 md:grid-cols-2">
+          <div>
+            <Label
+              htmlFor={`script-${index}`}
+              className="text-sm font-semibold text-muted-foreground"
+            >
+              Scene {index + 1} - Narration
+            </Label>
+            <Textarea
+              id={`script-${index}`}
+              value={segment.scriptSegment}
+              onChange={e => onScriptChange(index, e.target.value)}
+              rows={5}
+              className="mt-1 resize-none"
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <Label
+              htmlFor={`prompt-${index}`}
+              className="text-sm font-semibold text-muted-foreground"
+            >
+              Image Prompt
+            </Label>
+            <div className="relative">
+              <Textarea
+                id={`prompt-${index}`}
+                value={segment.imagePrompt}
+                onChange={e => onPromptChange(index, e.target.value)}
+                rows={5}
+                className="pr-12 resize-none mt-1"
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-2 top-2 h-8 w-8 text-muted-foreground hover:text-foreground"
+                onClick={handleCopy}
+                aria-label="Copy prompt"
+              >
+                <Copy className="h-4 w-4" />
+                <span className="sr-only">Copy prompt</span>
+              </Button>
+            </div>
           </div>
         </div>
       </CardContent>
