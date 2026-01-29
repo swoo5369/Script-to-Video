@@ -1,7 +1,32 @@
-import {Input} from '@/components/ui/input';
+'use client';
+
+import {useState} from 'react';
+import {Button} from '@/components/ui/button';
+import {Textarea} from '@/components/ui/textarea';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {useToast} from '@/hooks/use-toast';
+import {
+  generateSegments,
+  generateImageAction,
+  generateVideoAction,
+  type GenerateImageActionResult,
+} from './actions';
+import type {Segment} from '@/lib/types';
+import {ScriptSegmentCard} from '@/components/script-segment-card';
+import {Skeleton} from '@/components/ui/skeleton';
+import {Logo} from '@/components/logo';
+import {Wand2, Clapperboard, RefreshCw, Camera} from 'lucide-react';
+import {VideoPlayer} from '@/components/video-player';
+import {Label} from '@/components/ui/label';
+import {RadioGroup, RadioGroupItem} from '@/components/ui/radio-group';
 
 export default function ShortsAIScriptPage() {
-  const [geminiApiKey, setGeminiApiKey] = useState('');
   const [script, setScript] = useState('');
   const [stylePrompt, setStylePrompt] = useState('');
   const [segments, setSegments] = useState<Segment[]>([]);
@@ -17,7 +42,7 @@ export default function ShortsAIScriptPage() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!script.trim() || isLoading || !geminiApiKey.trim()) return;
+    if (!script.trim() || isLoading) return;
 
     setIsLoading(true);
     setSegments([]);
@@ -25,7 +50,7 @@ export default function ShortsAIScriptPage() {
     setVideoClips([]);
 
     try {
-      const result = await generateSegments(geminiApiKey, script, stylePrompt);
+      const result = await generateSegments(script, stylePrompt);
       setSegments(result);
     } catch (error) {
       console.error(error);
@@ -33,7 +58,7 @@ export default function ShortsAIScriptPage() {
         variant: 'destructive',
         title: 'Error',
         description:
-          'Failed to generate script segments. Please check your API Key and try again.',
+          'Failed to generate script segments. Please try again later.',
       });
     } finally {
       setIsLoading(false);
@@ -64,7 +89,7 @@ export default function ShortsAIScriptPage() {
   };
 
   const handleGenerateAllImages = async () => {
-    if (segments.length === 0 || !geminiApiKey.trim()) return;
+    if (segments.length === 0) return;
 
     setIsGeneratingAll(true);
     const promises: Promise<{
@@ -75,7 +100,7 @@ export default function ShortsAIScriptPage() {
     segments.forEach((segment, index) => {
       if (!generatedImages[index] && segment.imagePrompt) {
         promises.push(
-          generateImageAction(geminiApiKey, segment.imagePrompt)
+          generateImageAction(segment.imagePrompt)
             .then(result => ({
               index,
               imageResult: result,
@@ -126,7 +151,7 @@ export default function ShortsAIScriptPage() {
     segments.length > 0 && Object.keys(generatedImages).length === segments.length;
 
   const handleGenerateVideo = async () => {
-    if (!allImagesGenerated || isGeneratingVideo || !geminiApiKey.trim()) return;
+    if (!allImagesGenerated || isGeneratingVideo) return;
 
     setIsGeneratingVideo(true);
     setVideoClips([]);
@@ -138,12 +163,7 @@ export default function ShortsAIScriptPage() {
           imageId,
         ])
       );
-      const result = await generateVideoAction(
-        geminiApiKey,
-        segments,
-        imageIds,
-        aspectRatio
-      );
+      const result = await generateVideoAction(segments, imageIds, aspectRatio);
       setVideoClips(result.map(clip => clip.videoUrl));
       toast({
         title: 'Video Generated!',
@@ -173,37 +193,9 @@ export default function ShortsAIScriptPage() {
         <div className="mx-auto grid max-w-4xl gap-8">
           <Card>
             <CardHeader>
-              <CardTitle className="font-headline">
-                1. Enter Your Gemini API Key
-              </CardTitle>
-              <CardDescription>
-                You can get a free API key from{' '}
-                <a
-                  href="https://aistudio.google.com/keys"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline"
-                >
-                  Google AI Studio
-                </a>
-                . Your key is not stored.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Input
-                type="password"
-                placeholder="Enter your Gemini API Key here"
-                value={geminiApiKey}
-                onChange={e => setGeminiApiKey(e.target.value)}
-                className="text-base"
-              />
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
               <CardTitle className="flex items-center gap-2 font-headline">
                 <Wand2 className="h-6 w-6 text-primary" />
-                2. Start with Your Script
+                Start with Your Script
               </CardTitle>
               <CardDescription>
                 Paste your narration script below. We'll break it down into short
@@ -218,7 +210,7 @@ export default function ShortsAIScriptPage() {
                   onChange={e => setScript(e.target.value)}
                   rows={8}
                   className="resize-none text-base"
-                  disabled={isLoading || !geminiApiKey.trim()}
+                  disabled={isLoading}
                 />
                 <div className="grid gap-2">
                   <Label htmlFor="style-prompt" className="font-semibold">
@@ -231,7 +223,7 @@ export default function ShortsAIScriptPage() {
                     onChange={e => setStylePrompt(e.target.value)}
                     rows={2}
                     className="mt-1 resize-none"
-                    disabled={isLoading || !geminiApiKey.trim()}
+                    disabled={isLoading}
                   />
                   <p className="text-sm text-muted-foreground">
                     This prompt will be added to every generated image prompt to
@@ -242,9 +234,7 @@ export default function ShortsAIScriptPage() {
                   <Button
                     type="submit"
                     size="lg"
-                    disabled={
-                      !script.trim() || isLoading || !geminiApiKey.trim()
-                    }
+                    disabled={!script.trim() || isLoading}
                   >
                     {isLoading ? (
                       <>
@@ -296,7 +286,7 @@ export default function ShortsAIScriptPage() {
             <div className="grid gap-6">
               <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <h2 className="text-2xl font-bold tracking-tight font-headline">
-                  3. Your AI-Powered Storyboard
+                  Your AI-Powered Storyboard
                 </h2>
                 <div className="flex flex-wrap items-center justify-end gap-4">
                   <div className="flex items-center gap-2">
@@ -305,11 +295,7 @@ export default function ShortsAIScriptPage() {
                       value={aspectRatio}
                       onValueChange={setAspectRatio}
                       className="flex items-center gap-4"
-                      disabled={
-                        isGeneratingVideo ||
-                        isGeneratingAll ||
-                        !geminiApiKey.trim()
-                      }
+                      disabled={isGeneratingVideo || isGeneratingAll}
                     >
                       <div className="flex items-center gap-2">
                         <RadioGroupItem value="16:9" id="r1" />
@@ -328,11 +314,7 @@ export default function ShortsAIScriptPage() {
                   <div className="flex items-center gap-2">
                     <Button
                       onClick={handleGenerateAllImages}
-                      disabled={
-                        isGeneratingAll ||
-                        segments.length === 0 ||
-                        !geminiApiKey.trim()
-                      }
+                      disabled={isGeneratingAll || segments.length === 0}
                     >
                       {isGeneratingAll ? (
                         <>
@@ -352,8 +334,7 @@ export default function ShortsAIScriptPage() {
                       disabled={
                         !allImagesGenerated ||
                         isGeneratingAll ||
-                        isGeneratingVideo ||
-                        !geminiApiKey.trim()
+                        isGeneratingVideo
                       }
                     >
                       {isGeneratingVideo ? (
@@ -384,7 +365,6 @@ export default function ShortsAIScriptPage() {
                     isGeneratingAll={isGeneratingAll}
                     stylePrompt={stylePrompt}
                     aspectRatio={aspectRatio}
-                    geminiApiKey={geminiApiKey}
                   />
                 ))}
               </div>

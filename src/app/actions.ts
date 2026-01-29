@@ -4,8 +4,6 @@ import {promises as fs} from 'fs';
 import path from 'path';
 import os from 'os';
 import {v4 as uuidv4} from 'uuid';
-import {configureGenkit} from 'genkit';
-import {googleAI} from '@genkit-ai/google-genai';
 import {segmentNarrationScript} from '@/ai/flows/segment-narration-script';
 import type {SegmentNarrationScriptOutput} from '@/ai/flows/segment-narration-script';
 import {generateImage} from '@/ai/flows/generate-image';
@@ -14,29 +12,15 @@ import type {GenerateVideoClipsOutput} from '@/ai/flows/generate-video-clips';
 import {rewriteImagePrompt} from '@/ai/flows/rewrite-image-prompt';
 import type {Segment} from '@/lib/types';
 
-// Helper function to configure Genkit dynamically for each request
-function configureDynamicAi(apiKey: string) {
-  if (!apiKey) {
-    throw new Error(
-      'Gemini API Key is missing. Please provide it in the input field.'
-    );
-  }
-  configureGenkit({
-    plugins: [googleAI({apiKey})],
-  });
-}
-
 export type GenerateImageActionResult = {
   imageUrl: string;
   imageId: string;
 };
 
 export async function generateSegments(
-  apiKey: string,
   narrationScript: string,
   stylePrompt: string
 ): Promise<SegmentNarrationScriptOutput> {
-  configureDynamicAi(apiKey);
   if (!narrationScript) {
     throw new Error('Script cannot be empty.');
   }
@@ -46,10 +30,8 @@ export async function generateSegments(
 }
 
 export async function generateImageAction(
-  apiKey: string,
   prompt: string
 ): Promise<GenerateImageActionResult> {
-  configureDynamicAi(apiKey);
   const result = await generateImage({prompt});
   const imageUrl = result.imageUrl;
 
@@ -63,22 +45,18 @@ export async function generateImageAction(
 }
 
 export async function rewriteImagePromptAction(
-  apiKey: string,
   scriptSegment: string,
   stylePrompt: string
 ): Promise<string> {
-  configureDynamicAi(apiKey);
   const result = await rewriteImagePrompt({scriptSegment, stylePrompt});
   return result.imagePrompt;
 }
 
 export async function generateVideoAction(
-  apiKey: string,
   segments: Segment[],
   imageIds: Record<number, string>,
   aspectRatio: string
 ): Promise<GenerateVideoClipsOutput> {
-  configureDynamicAi(apiKey);
   if (!segments.length || !Object.keys(imageIds).length) {
     throw new Error('Segments and images are required.');
   }
@@ -123,12 +101,10 @@ export async function generateVideoAction(
 }
 
 export async function generateSingleVideoClipAction(
-  apiKey: string,
   segment: Segment,
   imageId: string,
   aspectRatio: string
 ): Promise<string> {
-  configureDynamicAi(apiKey);
   if (!segment || !imageId) {
     throw new Error('Segment and image ID are required.');
   }
