@@ -5,7 +5,7 @@ import {Card, CardContent} from '@/components/ui/card';
 import {Textarea} from '@/components/ui/textarea';
 import {Label} from '@/components/ui/label';
 import {useToast} from '@/hooks/use-toast';
-import {Copy, Camera, RefreshCw} from 'lucide-react';
+import {Copy, Camera, RefreshCw, Download} from 'lucide-react';
 import type {Segment} from '@/lib/types';
 import {generateImageAction, rewriteImagePromptAction} from '@/app/actions';
 import {useState} from 'react';
@@ -92,6 +92,30 @@ export function ScriptSegmentCard({
     }
   };
 
+  const handleDownloadImage = () => {
+    if (!generatedImageUrl) {
+      toast({
+        variant: 'destructive',
+        title: 'Image not available',
+        description: 'Please generate the image first.',
+      });
+      return;
+    }
+    const link = document.createElement('a');
+    link.href = generatedImageUrl;
+    const sanitizedPrompt = segment.imagePrompt
+      .replace(/[^a-z0-9]/gi, '_')
+      .slice(0, 30);
+    link.download = `scene-${index + 1}-${sanitizedPrompt}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast({
+      title: 'Download Started',
+      description: 'Your image is being downloaded.',
+    });
+  };
+
   const imageHint = segment.imagePrompt.split(' ').slice(0, 2).join(' ');
   const isCurrentlyGenerating =
     isGeneratingImage || (isGeneratingAll && !generatedImageUrl);
@@ -119,10 +143,18 @@ export function ScriptSegmentCard({
               <div className="absolute bottom-2 right-2 flex gap-2">
                 <Button
                   size="sm"
+                  variant="secondary"
+                  onClick={handleDownloadImage}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Download
+                </Button>
+                <Button
+                  size="sm"
                   onClick={handleGenerateImage}
                   disabled={isCurrentlyGenerating}
                 >
-                  <RefreshCw className="mr-2" />
+                  <RefreshCw className="mr-2 h-4 w-4" />
                   Regenerate
                 </Button>
               </div>
